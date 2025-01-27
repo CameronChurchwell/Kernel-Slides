@@ -1,0 +1,6 @@
+*.backup
+media
+slides
+latex
+**/__pycache__
+.DS_Store

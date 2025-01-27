@@ -169,6 +169,8 @@ class Tensor2D(VGroup):
         fade_opacity = 0.7
         fade_in_lag_ratio = 0.025
 
+        run_time = 1.0
+
         to_animations = []
         from_animations = []
         chunk_start = None
@@ -188,12 +190,12 @@ class Tensor2D(VGroup):
                 new_chunk_squares = self.squares.flatten()[chunk_start:chunk_start+warp_size]
                 from_animations.append(AnimationGroup(
                     AnimationGroup(
-                        *[sq.animate.fade(fade_opacity) for sq in chunk_squares]
+                        *[AnimationGroup(sq.animate.fade(fade_opacity), run_time=run_time) for sq in chunk_squares]
                     ),
                     AnimationGroup(
                         *[
                             # sq.animate.fade(0) for sq in new_chunk_squares
-                            IndicationTransform(sq, deepcopy(sq).fade(0)) for sq in new_chunk_squares
+                            IndicationTransform(sq, deepcopy(sq).fade(0), run_time=run_time) for sq in new_chunk_squares
                         ],
                         lag_ratio=fade_in_lag_ratio
                     )
@@ -202,6 +204,7 @@ class Tensor2D(VGroup):
                 from_animations.append(AnimationGroup(*current_group))
                 current_group = []
                 chunk_start = (index // warp_size) * warp_size
+                run_time = run_time * 0.9
 
             # move to animation
             target = self.squares.flatten()[index]
@@ -222,17 +225,17 @@ class Tensor2D(VGroup):
 
             # move back (from) animations
             path = Line(dest, original_position)
-            anim = MoveAlongPath(index_tensor[i, j], path)
+            anim = MoveAlongPath(index_tensor[i, j], path, run_time=run_time)
             current_group.append(anim)
 
         new_chunk_squares = self.squares.flatten()[chunk_start:chunk_start+warp_size]
         from_animations.append(AnimationGroup(
             AnimationGroup(
-                *[sq.animate.fade(fade_opacity) for sq in chunk_squares]
+                *[AnimationGroup(sq.animate.fade(fade_opacity), run_time=run_time) for sq in chunk_squares]
             ),
             AnimationGroup(
                 *[
-                    IndicationTransform(sq, deepcopy(sq).fade(0)) for sq in new_chunk_squares
+                    IndicationTransform(sq, deepcopy(sq).fade(0), run_time=run_time) for sq in new_chunk_squares
                 ],
                 lag_ratio=fade_in_lag_ratio
             )
@@ -240,7 +243,7 @@ class Tensor2D(VGroup):
         chunk_squares = new_chunk_squares
         from_animations.append(AnimationGroup(*current_group))
         from_animations.append(AnimationGroup(
-            *[sq.animate.fade(fade_opacity) for sq in chunk_squares],
+            *[AnimationGroup(sq.animate.fade(fade_opacity), run_time=run_time) for sq in chunk_squares],
         ))
 
         yield AnimationGroup(*to_animations)

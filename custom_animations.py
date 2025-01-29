@@ -1,4 +1,6 @@
 from manim import *
+import types
+from typing import Iterable, Callable
 
 class IndicationTransform(Transform):
 
@@ -64,3 +66,41 @@ class IndicationTransform(Transform):
         self.target_copy = tc
         self.starting_mobject = s
         return retval
+
+
+class TransformMatchingTexInOrder(TransformMatchingTex):
+    def get_shape_map(self, mobject: Mobject) -> dict:
+        shape_map = {}
+        for i, sm in enumerate(self.get_mobject_parts(mobject)):
+            key = i
+            if key not in shape_map:
+                shape_map[key] = VGroup()
+            shape_map[key].add(sm)
+        return shape_map
+    
+class CleanupAfter(AnimationGroup):
+    def __init__(
+        self,
+        *animations: Animation | Iterable[Animation] | types.GeneratorType[Animation],
+        cleanup_func: Callable = None,
+        group: Group | VGroup = None,
+        run_time: float | None = None,
+        rate_func: Callable[[float], float] = linear,
+        lag_ratio: float = 0,
+        **kwargs,
+    ) -> None:
+        super().__init__(
+            *animations, 
+            group=group, 
+            run_time=run_time,
+            rate_func=rate_func,
+            lag_ratio=lag_ratio,
+            **kwargs
+        )
+        self.cleanup_func = cleanup_func
+
+    def clean_up_from_scene(self, scene):
+        # self.source.highlight(GREEN)
+        # self.target.highlight(RED)
+        self.cleanup_func(scene)
+        # return super().clean_up_from_scene(scene)

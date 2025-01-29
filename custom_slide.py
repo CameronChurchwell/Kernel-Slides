@@ -3,6 +3,34 @@ from manim_slides import Slide
 from manim_slides.slide.animation import Wipe
 import textwrap
 
+
+tex_preamble = r"""
+\usepackage[english]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{dsfont}
+\usepackage{setspace}
+\usepackage{tipa}
+\usepackage{relsize}
+\usepackage{textcomp}
+\usepackage{mathrsfs}
+\usepackage{calligra}
+\usepackage{wasysym}
+\usepackage{ragged2e}
+\usepackage{physics}
+\usepackage{xcolor}
+\usepackage{microtype}
+\usepackage{enumitem}
+\DisableLigatures{encoding = *, family = * }
+\setlist[itemize]{leftmargin=1em, topsep=0em, itemsep=0em} % First-level itemize indentation
+\setlength{\textwidth}{30em}
+\usepackage[none]{hyphenat}
+\singlespacing
+"""
+tex_template = TexTemplate(preamble=tex_preamble)
 class CustomSlide(Slide):
     def update_canvas(self):
         self.counter += 1
@@ -26,26 +54,33 @@ class CustomSlide(Slide):
     def bullet_slide(self, title, *bullets):
         title = self.slide_title(title)
         self.transition(title)
-        group = Group()
-        group.add(title)
         self.next_slide()
-        previous = title
-        for bullet in bullets:
-            bullet = textwrap.fill(bullet, 50)
-            text = Text(bullet, font_size=40)
-            text.next_to(previous, DOWN)
-            text.align_to(previous, LEFT)
-            text.shift((1 if previous is title else 0, -0.3, 0))
-            bullet_point = Dot()
-            bullet_point.next_to(text, LEFT)
-            bullet_point.align_to(text, UP)
-            bullet_point.shift((0, -0.1, 0))
-            self.play(FadeIn(text), Write(bullet_point, rate_func=rate_functions.ease_out_sine))
-            previous = text
+        indentation = []
+        bullets = list(bullets)
+        for i in range(0, len(bullets)):
+            indentation.append(0)
+            while bullets[i].startswith('\t'):
+                bullets[i] = bullets[i][1:]
+                indentation[i] += 1
+        bullets = [
+            r'\item ' + r'\begin{itemize}' * ind + bullet + r'\end{itemize}' * ind 
+            for bullet, ind in zip(bullets, indentation)
+        ]
+        bullets = Tex(
+            *bullets,
+            arg_separator=r'',
+            tex_environment='itemize',
+            tex_template=tex_template,
+            font_size=40
+        )
+        bullets.next_to(title, DOWN)
+        bullets.align_to(title, LEFT)
+        bullets.shift(DOWN * 0.25)
+
+        for bullet, ind in zip(bullets, indentation):
+            bullet.fade(0.2*ind)
+            self.play(FadeIn(bullet, run_time=0.75))
             self.next_slide()
-            group.add(bullet_point)
-            group.add(text)
-        self.next_slide()
 
     def title_slide(self, title, author):
         self.play(Wait()); self.next_slide(auto_next=True)
@@ -58,8 +93,8 @@ class CustomSlide(Slide):
         ),)
         self.next_slide(loop=True)
         self.play(AnimationGroup(
-            ApplyWave(text, amplitude=0.02, run_time=1.33),
-            ApplyWave(subtext, amplitude=0.02, run_time=1.33),
+            ApplyWave(text, amplitude=0.02, run_time=2.),
+            ApplyWave(subtext, amplitude=0.02, run_time=2.),
             Wait(1),
             lag_ratio=0.2
         ),)

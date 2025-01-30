@@ -408,7 +408,9 @@ class GridOfSquares(CustomSlide):
 
         self.play(t0.animate.highlight(GREEN))
 
-        self.play_sequence(t0.gather_from(big_tensor))
+        self.next_slide()
+
+        self.play(t0.animate.gather_from(big_tensor))
 
         self.next_slide()
 
@@ -500,12 +502,64 @@ class GridOfSquares(CustomSlide):
 
         self.next_slide()
 
-        self.play_sequence(t2.gather_from(medium_tensor))
+        self.play(t2.animate.gather_from(medium_tensor))
 
-        # breakpoint()
+        self.next_slide()
+        target = deepcopy(t2)
+        for i in range(2, 4):
+            for j in range(0, 4):
+                old_tex = target[i, j]['content']
+                target.set_content_at(i, j, 0)
+                target[i, j]['content'].set_style(**old_tex.get_style())
+
+        self.play(t2.animate.elementwise_op(mask_tensor, r'\land'))
+        self.play(t2.animate.become(target))
+        t2.content = target.content
+        t2.update_tex_strings_from(target)
+        self.play(t2.animate.highlight(GREEN))
 
         self.next_slide()
 
+    def triton_perf_slide(self):
+        self.bullet_slide(
+            'Triton Performance',
+            'Faster than torch ops...',
+            'But not as fast as CuDNN',
+            '\tNo one is as fast as CuDNN',
+            'For my research, it is \\textgreater 3X faster while using half as much VRAM*'
+        )
+        img = ImageMobject('perfgraph.png')
+        img.scale(0.9)
+        img.center()
+        self.play(
+            FadeOut(*self.mobjects_without_canvas),
+            FadeIn(img)
+        )
+
+    # def test_gather_slide(self):
+    #     value_tensor = Tensor2D(1, 1, 1, np.array([[7]]))
+    #     index_tensor = Tensor2D(1, 1, 1, np.array([[0]]))
+    #     index_tensor.next_to(value_tensor, LEFT)
+
+    #     index_tensor.highlight(GREEN)
+
+    #     self.play(FadeIn(value_tensor, index_tensor))
+
+    #     self.next_slide()
+
+    #     # index_tensor.gather_from(value_tensor)
+    #     # self.play(Wait())
+    #     self.play(index_tensor.animate.gather_from(value_tensor))
+
+    #     self.next_slide()
+
+    #     # self.play(FadeOut(value_tensor))
+
+    #     # self.next_slide()
+
+    #     # breakpoint()
+    #     index_tensor.set_content_at(0, 0, 'A')
+    #     self.next_slide()
 
     def construct(self):
         # slide number
@@ -525,37 +579,72 @@ class GridOfSquares(CustomSlide):
         # #     'fifth'
         # # )
 
-        # self.bullet_slide(
-        #     'What is a Kernel?',
-        #     'first', 
-        #     'second',
-        #     'third',
-        #     'fourth',
-        #     'fifth'
-        # )
+        self.bullet_slide(
+            'What is a Kernel?',
+            'A Small, fundamental unit of execution', 
+            'Takes inputs and runs to completion',
+            'Runs entirely on device (GPU)',
+        )
 
-        # self.bullet_slide(
-        #     'Why Write a Kernel?',
-        #     'Your code is impractically slow', 
-        #     'Your code uses too much VRAM',
-        #     'The built-in torch/jax operations cannot be combined to achieve what you want',
-        # )
+        self.bullet_slide(
+            'How GPUs Work',
+            'Shader Programs (GLSL, HLSL, etc.)', 
+            '\tVertex Shaders',
+            '\t\tTransform (a few) Vertices in 3D',
+            '\tFragment Shaders',
+            '\t\tTransform (many) pixels in 2D',
+            '\t\tUses interpolated values from vertex shader output',
+        )
 
-        # self.bullet_slide(
-        #     'Why is Your Code Inefficient?',
-        #     'You\'re using a python "for" or "while" loop', 
-        #     'You\'re launching a lot of kernels',
-        #     'You have unnecessary memory copies',
-        #     'You have wasted computations',
-        #     'Your memory access patterns are inefficient'
-        # )
+        self.bullet_slide(
+            '(NVIDIA) GPU Architecture',
+            'Streaming Multiprocessors (SM)', 
+            '\tA100 has 108 SMs',
+            '\tEach SM has many threads (2048 on A100 1024 on older cards)',
+            '\tEach SM can run up to 32 {\\bf Blocks} at once',
+            'Threads are organized into {\\bf Warps}',
+            '\t32 threads per warp',
+            '\tAll threads within a warp {\\bf must} run the same kernel',
+            '\t\tBut different blocks can run different kernels at once',
+        )
 
-        # # self.bullet_slide(
-        # #     'How GPUs Work',
-        # #     '', 
-        # #     '',
-        # #     '',
-        # # )
+        self.bullet_slide(
+            'Why Write a Kernel?',
+            'Your code is impractically slow', 
+            'Your code uses too much VRAM',
+            'The built-in torch/jax operations cannot be combined to achieve what you want',
+        )
+
+        self.bullet_slide(
+            'Why is Your Code Inefficient?',
+            'You\'re using a python "for" or "while" loop', 
+            'You\'re launching a lot of kernels',
+            'You have unnecessary memory copies',
+            'You have wasted computations',
+            'Your memory access patterns are inefficient'
+        )
+
+        self.bullet_slide(
+            'Why CUDA sucks',
+            'C++', 
+            'Many levels of hierarchy',
+            '\thalf warps, warps, blocks, grids',
+            'Memory access patterns matter (a lot!)',
+            '\tMemory coalescing, bank conflicts, shared memory',
+            'Syncrhonization',
+            '\tBetween different blocks, warps, and threads',
+        )
+
+        self.bullet_slide(
+            'Enter: Triton',
+            'Triton: An Intermediate Language and Compiler for Tiled Neural Network Computations {\\it Tillet et. al., 2019}',
+            'Tiled computation',
+            'Threads and warps are handled for you',
+            'Easier to write',
+            'Python API, \\texttt{import triton.language as tl}',
+            'Just-in-Time (JIT) compilation means greater portability',
+            'Automatic tuning'
+        )
 
         # self.indexing_slide()
 
@@ -565,5 +654,6 @@ class GridOfSquares(CustomSlide):
 
         # self.coalesce_slide()
 
-        self.triton_load_slide()
+        # self.triton_load_slide()
 
+        self.triton_perf_slide()

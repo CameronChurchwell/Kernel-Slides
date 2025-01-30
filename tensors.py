@@ -34,6 +34,7 @@ class Tensor2D(VGroup):
                 self.add(square)
         self.set_content(content)
         self.move_to((0, 0, 0))
+        self.saved_states = []
 
     # @property
     # def submobjects(self):
@@ -42,6 +43,18 @@ class Tensor2D(VGroup):
     # @submobjects.setter
     # def submobjects(self, value):
     #     pass
+
+    # def save_state(self):
+    #     # if hasattr(self, 'saved_state'):
+    #     #     self.saved_states.append(self.saved_state)
+    #     #     del self.saved_state
+    #     return super().save_state()
+
+    # def restore(self):
+    #     ret = super().restore()
+    #     # if len(self.saved_states) > 0:
+    #     #     self.saved_state = self.saved_states.pop()
+    #     return ret
 
     def highlight(self, color=YELLOW):
         self.set_color(color)
@@ -121,67 +134,52 @@ class Tensor2D(VGroup):
                 self.squares[i, j]['content'].tex_string = other.squares[i, j]['content'].tex_string
 
     def gather_from(self, value_tensor):
-        """note that index_tensor should contain flattened indices"""
-        assert isinstance(self, Tensor2D)
-        try:
-            indices = self.content.astype(int)
-        except:
-            raise ValueError('index_tensor cannot be converted to int')
+        assert isinstance(value_tensor, Tensor2D)
+        indices = self.content.astype(int)
+        values = value_tensor.content.flatten()
 
-        scale_factor = value_tensor.square_size / self.square_size
+        for i in range(0, self.N):
+            for j in range(0, self.M):
+                old_tex = self.squares[i, j]['content']
+                self.set_content_at(i, j, values[indices[i, j]])
+                self.squares[i, j]['content'].set_style(**old_tex.get_style())
+        return self
 
-        to_animations = []
+    @override_animate(gather_from)
+    def gather_from_animate(self, value_tensor, anim_args=None):
+        index_tensor = deepcopy(self)
+        self.gather_from(value_tensor)
+        indices = index_tensor.content.astype(int)
+
         from_animations = []
         for i in range(0, self.N):
             for j in range(0, self.M):
                 original_position = self[i, j]['square'].get_center()
 
-                # move to animation
+                # move to
                 index = indices[i, j]
                 target = value_tensor.squares.flatten()[index]
                 dest = target.get_center()
                 path = Line(original_position, dest)
-                anim = MoveAlongPath(self[i, j]['square'], path)
-                # anim = index_tensor[i, j]['square'].animate.move_to(dest).scale(scale_factor)
-                to_animations.append(anim)
-
-                # indices become values animation
-                current_content = self[i, j]['content']
-                target_content: MathTex = value_tensor.squares.flatten()[index]['content'].copy()
-                target_content.set_style(**current_content.get_style())
-                anim = Transform(
-                    current_content,
-                    target_content
-                )
-                to_animations.append(anim)
+                self[i, j].move_to(dest)
 
                 # move back (from) animations
                 path = Line(dest, original_position)
-                # anim = index_tensor[i, j].animate.move_to(original_position)#.scale(1/scale_factor)
                 anim = MoveAlongPath(self[i, j], path)
                 from_animations.append(anim)
 
+        self.save_state()
+        self.become(index_tensor)
+
         animations = Succession(
-            AnimationGroup(
-                *to_animations
-            ),
+            Restore(self),
             Wait(1),
             AnimationGroup(
                 *from_animations
             ),
         )
 
-        return [animations]
-
-    # def stash_squares(self):
-        # self._style_copy = deepcopy(self)
-
-    # def restore_squares(self):
-        # self.set_style(**self._style_copy.get_style())
-        # for sq, osq in zip(self.squares.flatten(), self._style_copy.squares.flatten()):
-        #     sq['square'].set_style(**osq['square'].get_style())
-        #     sq['content'].set_style(**osq['content'].get_style())
-        # self.squares = deepcopy(self._style_copy.squares)
+        return animations
 
     def coalesced_gather(self, index_tensor, warp_size=32):
         """note that index_tensor should contain flattened indices"""

@@ -402,12 +402,107 @@ class GridOfSquares(CustomSlide):
         self.next_slide()
 
         self.play(t0.animate.__iadd__(t1), FadeOut(code[3]))
+        t2 = deepcopy(t0)
 
         self.next_slide()
 
         self.play(t0.animate.highlight(GREEN))
 
         self.play_sequence(big_tensor.gather(t0))
+
+        self.next_slide()
+
+        medium_tensor = Tensor2D(8, 8, tensor_size, np.random.randint(0, 10, (8, 8)))
+        for i in range(6, 8):
+            for j in range(0, 8):
+                medium_tensor.set_content_at(i, j, '?')
+        medium_tensor.move_to(big_tensor)
+        medium_tensor[4:, :4].highlight(GOLD)
+
+        code = Tex(
+            'tl.load(',
+            'X_ptr+',
+            'tl.arange(0,B)[None]',
+            '+',
+            'tl.arange(B,B*2)[:,None]',
+            '*',
+            'W',
+            ', ...)',
+            tex_environment='verbatim'
+        )
+
+        code.scale_to_fit_width(code_width)
+        code.move_to(code_center)
+        self.play(Succession(
+            AnimationGroup(
+                FadeOut(t0),
+                ReplacementTransform(big_tensor, medium_tensor),
+            ),
+            Write(code, run_time=0.85),
+        ))
+        self.next_slide()
+
+        replacement_code = Tex(
+            'tl.load(',
+            'X_ptr+tl.arange(0,B)[None]+tl.arange(B,B*2)[:,None]*W',
+            ', ',
+            '...', 
+            ')',
+            tex_environment='verbatim'
+        )
+        replacement_code.scale_to_fit_width(code_width)
+        replacement_code.move_to(code_center)
+
+        self.replace(code, replacement_code)
+
+        mask_code = Tex(
+            'tl.load(',
+            # '',
+            # '',
+            # '',
+            '...',
+            ', ',
+            r'mask=(row_indices<H)&(col_indices<W)',
+            ')',
+            tex_environment='verbatim'
+        )
+        mask_code.scale_to_fit_width(code_width)
+        mask_code.move_to(code_center)
+        self.play(TransformMatchingTexInOrder(replacement_code, mask_code))
+
+        self.next_slide()
+
+        self.play(
+            FadeOut(mask_code[0]),
+            FadeOut(mask_code[-1]),
+            mask_code[1:-1].animate.scale_to_fit_width(code_width).move_to(code_center)
+        )
+
+        self.next_slide()
+
+        mask = np.ones((4, 4), dtype=int)
+        mask[-2:] = 0
+        mask_tensor = Tensor2D(4, 4, tensor_size, mask)
+        mask_tensor.move_to(t1)
+
+        self.play(
+            ReplacementTransform(mask_code[1], t2),
+            ReplacementTransform(mask_code[3], mask_tensor),
+            FadeOut(mask_code[2])
+        )
+
+        self.next_slide()
+
+        self.play(
+            t2[:-2].animate.highlight(GREEN),
+            t2[-2:].animate.highlight(RED)
+        )
+
+        self.next_slide()
+
+        self.play_sequence(medium_tensor.gather(t2))
+
+        # breakpoint()
 
         self.next_slide()
 

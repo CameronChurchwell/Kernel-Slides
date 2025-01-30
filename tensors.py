@@ -5,6 +5,10 @@ from helpers import *
 
 from custom_animations import *
 
+# tex_template = TexTemplate(
+#     preamble=TexTemplateLibrary.default.preamble+'\n\\usepackage{emoji}', 
+#     tex_compiler='lualatex')
+
 class Tensor2D(VGroup):
     def __init__(self, N, M, square_size, content=None, **kwargs):
         self.squares = np.array([[]])
@@ -98,7 +102,10 @@ class Tensor2D(VGroup):
             self.content[i, j] = content[0] if len(content) == 1 else content
         except:
             breakpoint()
+        # try:
         tex = MathTex(*list(str(c) for c in content))
+        # except:
+            # breakpoint()
         square = self.squares[i, j]['square']
         if tex.height > tex.width:
             tex.scale_to_fit_height(square.width*0.7)

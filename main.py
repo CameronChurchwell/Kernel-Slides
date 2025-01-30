@@ -529,12 +529,156 @@ class GridOfSquares(CustomSlide):
             'For my research, it is \\textgreater 3X faster while using half as much VRAM*'
         )
         img = ImageMobject('perfgraph.png')
-        img.scale(0.9)
+        img.scale(1.2)
         img.center()
         self.play(
             FadeOut(*self.mobjects_without_canvas),
             FadeIn(img)
         )
+
+    def triton_example_slide(self):
+        title = self.slide_title('Example')
+        text = Tex('from \\texttt{triton-lang.org/main/getting-started/tutorials/}')
+        text.scale(0.5)
+        text.next_to(title, RIGHT)
+        self.transition(Group(title, text))
+
+        self.next_slide()
+
+        code_area_line_w = Line(
+            (-config['frame_x_radius'], 0, 0),
+            (config['frame_x_radius'], 0, 0),
+        )
+        code_area_line_h = Line(
+            (0, title.get_edge_center(DOWN)[1], 0),
+            (0, -config['frame_y_radius'], 0),
+        )
+        code_width = code_area_line_w.get_length() - 2
+        code_height = code_area_line_h.get_length() - 0.5
+        code_center = (
+            code_area_line_w.get_center()[0],
+            code_area_line_h.get_center()[1],
+            0
+        )
+
+        code = Code(
+            'code_examples/triton_add.py',
+            formatter_style='monokai'
+        )
+        # code.scale_to_fit_width(code_width)
+        code.scale_to_fit_height(code_height)
+        code.move_to(code_center)
+
+        self.play(FadeIn(code))
+
+        self.next_slide()
+
+        next_code = Code(
+            'code_examples/triton_add_call.py',
+            formatter_style='monokai'
+        )
+        next_code.scale_to_fit_width(code_width)
+        next_code.move_to(code_center)
+        self.play(ReplacementTransform(code, next_code))
+        code = next_code
+
+        self.next_slide()
+
+    def pallas_example_slide(self):
+        title = self.slide_title('Example')
+        text = Tex('from \\texttt{jax.readthedocs.io/en/latest/pallas/quickstart.html}')
+        text.scale(0.5)
+        text.next_to(title, RIGHT)
+        self.transition(Group(title, text))
+
+        self.next_slide()
+
+        code_area_line_w = Line(
+            (-config['frame_x_radius'], 0, 0),
+            (config['frame_x_radius'], 0, 0),
+        )
+        code_area_line_h = Line(
+            (0, title.get_edge_center(DOWN)[1], 0),
+            (0, -config['frame_y_radius'], 0),
+        )
+        code_width = code_area_line_w.get_length() - 2
+        code_height = code_area_line_h.get_length() - 0.5
+        code_center = (
+            code_area_line_w.get_center()[0],
+            code_area_line_h.get_center()[1],
+            0
+        )
+
+        code = Code(
+            'code_examples/pallas_add.py',
+            formatter_style='monokai'
+        )
+        # code.scale_to_fit_width(code_width)
+        code.scale_to_fit_width(code_width)
+        code.move_to(code_center)
+
+        self.play(FadeIn(code))
+
+        self.next_slide()
+
+        next_code = Code(
+            'code_examples/pallas_add_call.py',
+            formatter_style='monokai'
+        )
+        next_code.scale_to_fit_width(code_width)
+        next_code.move_to(code_center)
+        self.play(ReplacementTransform(code, next_code))
+        code = next_code
+
+        self.next_slide()
+
+    def cuda_example_slide(self):
+        title = self.slide_title('Example')
+        text = Tex('from \\texttt{github.com/olcf-tutorials/vector\\_addition\\_cuda}')
+        text.scale(0.5)
+        text.next_to(title, RIGHT)
+        self.transition(Group(title, text))
+
+        self.next_slide()
+
+        code_area_line_w = Line(
+            (-config['frame_x_radius'], 0, 0),
+            (config['frame_x_radius'], 0, 0),
+        )
+        code_area_line_h = Line(
+            (0, title.get_edge_center(DOWN)[1], 0),
+            (0, -config['frame_y_radius'], 0),
+        )
+        code_width = code_area_line_w.get_length() - 2
+        code_height = code_area_line_h.get_length() - 0.5
+        code_center = (
+            code_area_line_w.get_center()[0],
+            code_area_line_h.get_center()[1],
+            0
+        )
+
+        code = Code(
+            'code_examples/cuda_add.cpp',
+            formatter_style='monokai'
+        )
+        # code.scale_to_fit_width(code_width)
+        code.scale_to_fit_width(code_width)
+        code.move_to(code_center)
+
+        self.play(FadeIn(code))
+
+        self.next_slide()
+
+        next_code = Code(
+            'code_examples/cuda_add_call.cpp',
+            formatter_style='monokai'
+        )
+        next_code.scale_to_fit_height(code_height)
+        next_code.move_to(code_center)
+        self.play(ReplacementTransform(code, next_code))
+        code = next_code
+
+        self.next_slide()
 
     # def test_gather_slide(self):
     #     value_tensor = Tensor2D(1, 1, 1, np.array([[7]]))
@@ -570,15 +714,6 @@ class GridOfSquares(CustomSlide):
 
         self.title_slide('Kernel Programming', 'Cameron Churchwell')
 
-        # # self.bullet_slide(
-        # #     'Title',
-        # #     'first', 
-        # #     'second',
-        # #     'third',
-        # #     'fourth',
-        # #     'fifth'
-        # # )
-
         self.bullet_slide(
             'What is a Kernel?',
             'A Small, fundamental unit of execution', 
@@ -607,6 +742,16 @@ class GridOfSquares(CustomSlide):
             '\tAll threads within a warp {\\bf must} run the same kernel',
             '\t\tBut different blocks can run different kernels at once',
         )
+
+        self.bullet_slide(
+            'The Grid',
+            '1D, 2D, or 3D group of Blocks',
+            'Similar to a loop index',
+            '\t\\texttt{blockDim.x} returns the size of the grid in the x dimension',
+            '\t\\texttt{blockIdx.x} returns the index of the block in the x dimension',
+        )
+
+        self.cuda_example_slide()
 
         self.bullet_slide(
             'Why Write a Kernel?',
@@ -641,19 +786,39 @@ class GridOfSquares(CustomSlide):
             'Tiled computation',
             'Threads and warps are handled for you',
             'Easier to write',
-            'Python API, \\texttt{import triton.language as tl}',
+            'Python API: \\texttt{import triton.language as tl}',
             'Just-in-Time (JIT) compilation means greater portability',
             'Automatic tuning'
         )
 
-        # self.indexing_slide()
+        self.triton_example_slide()
 
-        # self.stride_slide()
+        self.indexing_slide()
 
-        # self.broadcasting_slide()
+        self.stride_slide()
 
-        # self.coalesce_slide()
+        self.broadcasting_slide()
 
-        # self.triton_load_slide()
+        self.coalesce_slide()
+
+        self.triton_load_slide()
+
+        self.triton_example_slide()
 
         self.triton_perf_slide()
+
+        self.bullet_slide(
+            'Enter: Pallas (Google wants a go)',
+            'Pallas: a JAX Kernel Language',
+            'An abstraction on top of Triton',
+            'Makes loading slightly easier in simple cases...',
+            '\tAnd slightly harder in more complex cases',
+            'Even easier to write',
+            'Python API: \\texttt{from jax.experimental import pallas as pl}',
+            'Also works on TPUs!'
+        )
+
+        self.pallas_example_slide()
+
+        thanks = Text("Thank you for listening!")
+        self.transition(thanks)

@@ -280,6 +280,137 @@ class GridOfSquares(CustomSlide):
         self.play_sequence(slice.enumerate(vd, 'stride_indexing'))
         self.next_slide()
 
+    def triton_load_slide(self):
+        # self.next_slide = lambda: self.wait(1)
+        tensor_size = 0.6
+        title = self.slide_title('tl.load indexing')
+
+        big_tensor = Tensor2D(8, 8, tensor_size, np.random.randint(0, 10, (8, 8)))
+        big_tensor.to_corner(DR)
+
+        code_area_line = Line(
+            (-config['frame_x_radius'], 0, 0),
+            (big_tensor.get_edge_center(LEFT)[0], 0, 0)
+        )
+        code_width = code_area_line.get_length() - 0.75
+        code_center = code_area_line.get_midpoint()
+
+        start = Group(title, big_tensor)
+
+        self.transition(start)
+
+        self.next_slide()
+
+        self.play(big_tensor[4:, :4].animate.highlight(GOLD))
+
+        self.next_slide()
+
+        code = Tex(
+            'tl.load(',
+            'X_ptr+',
+            'tl.arange(0,B)[None]',
+            '+',
+            'tl.arange(B,B*2)[:,None]',
+            '*',
+            'W',
+            ', ...)',
+            tex_environment='verbatim'
+        )
+
+        code.scale_to_fit_width(code_width)
+        code.move_to(code_center)
+        self.play(Write(code, run_time=0.85))
+
+        self.next_slide()
+
+        self.play(
+            FadeOut(code[0]),
+            FadeOut(code[-1]),
+            code[1:-1].animate.scale_to_fit_width(code_width).move_to(code_center)
+        )
+
+        self.next_slide()
+
+        # big_tensor.save_state()
+        self.play(
+            # code[1].animate.set_color(RED),
+            Indicate(code[1], color=RED, run_time=5, scale_factor=1.5, rate_func=there_and_back_with_pause),
+            Indicate(code[2:-1], color=GREY, run_time=5, scale_factor=0.9, rate_func=there_and_back_with_pause),
+            # big_tensor[:1, :1].animate.highlight(RED)
+            Indicate(big_tensor[:1, :1], color=RED, run_time=5, rate_func=there_and_back_with_pause)
+        )
+
+
+        self.next_slide()
+
+        self.play(
+            # Restore(big_tensor),
+            # big_tensor[:1, :1].animate.reset_color(),
+            FadeOut(code[1]),
+            code[2:-1].animate.scale_to_fit_width(code_width).move_to(code_center)
+        )
+
+        self.next_slide()
+
+        self.play(
+            Indicate(code[6], color=BLUE, scale_factor=2, run_time=5, rate_func=there_and_back_with_pause),
+            Indicate(code[2:-2], color=GREY, run_time=5, scale_factor=0.9, rate_func=there_and_back_with_pause),
+            AnimationGroup(*[
+                Indicate(big_tensor[:, i:i+1], color=BLUE, rate_func=there_and_back_with_pause)
+                for i in range(0, big_tensor.M)
+            ],
+                lag_ratio=0.1,
+                run_time=5
+            )
+        )
+
+        self.next_slide()
+
+        t0 = Tensor2D(1, 4, tensor_size, np.arange(0, 4)[None])
+        t1 = Tensor2D(4, 1, tensor_size, np.arange(4, 8)[:, None])
+        m = Tensor2D(1, 1, tensor_size, np.array([8])[None])
+        # t0 = Tensor2D(1, 4, 1, np.arange(0, 4)[None])
+        # t1 = Tensor2D(4, 1, 1, np.arange(4, 8)[:, None])
+        # m = Tensor2D(1, 1, 1, np.array([8])[None])
+        m.squares[0,0]['square'].fade(1)
+        t0.to_edge(LEFT)
+        t1.next_to(t0, RIGHT).shift(RIGHT*2)
+        m.next_to(t1, RIGHT).shift(RIGHT*2)
+
+        plus_dest = Line(t0.get_edge_center(RIGHT), t1.get_edge_center(LEFT)).get_midpoint()
+        asterisk_dest = Line(t1.get_edge_center(RIGHT), m.get_edge_center(LEFT)).get_midpoint()
+        self.play(AnimationGroup(
+            ReplacementTransform(code[2], t0),
+            ReplacementTransform(code[4], t1),
+            ReplacementTransform(code[6], m),
+            code[3].animate.move_to(plus_dest).scale(1.2),
+            code[5].animate.move_to(asterisk_dest).scale(1.2)
+        ))
+        self.next_slide()
+
+
+        self.play(m.animate.expand(0, 4))
+        self.play(t1.animate.__imul__(m), FadeOut(code[5]))
+
+        self.next_slide()
+
+        self.play(AnimationGroup(
+            t0.animate.expand(0, 4),
+            t1.animate.expand(1, 4, recenter=False)
+        ))
+
+        self.next_slide()
+
+        self.play(t0.animate.__iadd__(t1), FadeOut(code[3]))
+
+        self.next_slide()
+
+        self.play(t0.animate.highlight(GREEN))
+
+        self.play_sequence(big_tensor.gather(t0))
+
+        self.next_slide()
+
 
     def construct(self):
         # slide number
@@ -288,7 +419,7 @@ class GridOfSquares(CustomSlide):
         self.add(slide_number)
         self.add_to_canvas(slide_number=slide_number)
 
-        # self.title_slide('Kernel Programming', 'Cameron Churchwell')
+        self.title_slide('Kernel Programming', 'Cameron Churchwell')
 
         # # self.bullet_slide(
         # #     'Title',
@@ -331,11 +462,13 @@ class GridOfSquares(CustomSlide):
         # #     '',
         # # )
 
-        self.indexing_slide()
+        # self.indexing_slide()
 
-        self.stride_slide()
+        # self.stride_slide()
 
-        self.broadcasting_slide()
+        # self.broadcasting_slide()
 
-        self.coalesce_slide()
+        # self.coalesce_slide()
+
+        self.triton_load_slide()
 

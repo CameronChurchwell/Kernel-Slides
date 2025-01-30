@@ -47,6 +47,8 @@ class Tensor2D(VGroup):
     def reset_color(self):
         self.set_color(WHITE)
         self.set_fill(None, opacity=0.)
+        for sq in self.submobjects:
+            sq['content'].set_fill(WHITE, opacity=1.)
 
     def __getitem__(self, slices):
         # result = self.squares[*slices]
@@ -105,6 +107,12 @@ class Tensor2D(VGroup):
         tex.move_to(square.get_center())
         self.squares[i, j]['content'] = tex
 
+    def update_tex_strings_from(self, other):
+        assert self.squares.shape == other.squares.shape
+        for i in range(0, self.N):
+            for j in range(0, self.M):
+                self.squares[i, j]['content'].tex_string = other.squares[i, j]['content'].tex_string
+
     def gather(self, index_tensor):
         """note that index_tensor should contain flattened indices"""
         assert isinstance(index_tensor, Tensor2D)
@@ -112,6 +120,8 @@ class Tensor2D(VGroup):
             indices = index_tensor.content.astype(int)
         except:
             raise ValueError('index_tensor cannot be converted to int')
+        
+        scale_factor = self.square_size / index_tensor.square_size
 
         to_animations = []
         from_animations = []
@@ -125,6 +135,7 @@ class Tensor2D(VGroup):
                 dest = target.get_center()
                 path = Line(original_position, dest)
                 anim = MoveAlongPath(index_tensor[i, j]['square'], path)
+                # anim = index_tensor[i, j]['square'].animate.move_to(dest).scale(scale_factor)
                 to_animations.append(anim)
 
                 # indices become values animation
@@ -139,6 +150,7 @@ class Tensor2D(VGroup):
 
                 # move back (from) animations
                 path = Line(dest, original_position)
+                # anim = index_tensor[i, j].animate.move_to(original_position)#.scale(1/scale_factor)
                 anim = MoveAlongPath(index_tensor[i, j], path)
                 from_animations.append(anim)
 
@@ -432,9 +444,13 @@ class Tensor2D(VGroup):
 
     @override_animate(elementwise_op)
     def elementwise_op_animate(self, other, op_string='+', anim_args=None):
+        if hasattr(self, 'saved_state'):
+            del self.saved_state
         source = deepcopy(self)
         self.elementwise_op(other, op_string)
         animations = []
+        if hasattr(self, 'saved_state'):
+            breakpoint()
         self.save_state()
         for i in range(0, self.N):
             for j in range(0, self.M):
@@ -470,12 +486,14 @@ class Tensor2D(VGroup):
     def __iadd__animate(self, other, anim_args=None):
         target = deepcopy(self)
         target += other
-
-        return Succession(
+        animations = Succession(
             self.animate.elementwise_op(other, '+'),
             self.animate.become(target)
         )
-    
+        self.content = target.content
+        self.update_tex_strings_from(target)
+        return animations
+
     def __isub__(self, other):
         content_result = self.content - other.content
         self.set_content(content_result)
@@ -486,10 +504,13 @@ class Tensor2D(VGroup):
         target = deepcopy(self)
         target -= other
 
-        return Succession(
+        animations = Succession(
             self.animate.elementwise_op(other, '-'),
             self.animate.become(target)
         )
+        self.content = target.content
+        self.update_tex_strings_from(target)
+        return animations
 
     def __imul__(self, other):
         content_result = self.content * other.content
@@ -501,10 +522,13 @@ class Tensor2D(VGroup):
         target = deepcopy(self)
         target *= other
 
-        return Succession(
+        animations = Succession(
             self.animate.elementwise_op(other, r'\cdot'),
             self.animate.become(target)
         )
+        self.content = target.content
+        self.update_tex_strings_from(target)
+        return animations
 
     def __itruediv__(self, other):
         content_result = self.content / other.content
@@ -516,8 +540,11 @@ class Tensor2D(VGroup):
         target = deepcopy(self)
         target /= other
 
-        return Succession(
+        animations = Succession(
             self.animate.elementwise_op(other, '/'),
             self.animate.become(target)
         )
+        self.content = target.content
+        self.update_tex_strings_from(target)
+        return animations
 

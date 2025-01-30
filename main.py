@@ -408,7 +408,7 @@ class GridOfSquares(CustomSlide):
 
         self.play(t0.animate.highlight(GREEN))
 
-        self.play_sequence(big_tensor.gather(t0))
+        self.play_sequence(t0.gather_from(big_tensor))
 
         self.next_slide()
 
@@ -500,7 +500,7 @@ class GridOfSquares(CustomSlide):
 
         self.next_slide()
 
-        self.play_sequence(medium_tensor.gather(t2))
+        self.play_sequence(t2.gather_from(medium_tensor))
 
         # breakpoint()
 

@@ -120,34 +120,34 @@ class Tensor2D(VGroup):
             for j in range(0, self.M):
                 self.squares[i, j]['content'].tex_string = other.squares[i, j]['content'].tex_string
 
-    def gather(self, index_tensor):
+    def gather_from(self, value_tensor):
         """note that index_tensor should contain flattened indices"""
-        assert isinstance(index_tensor, Tensor2D)
+        assert isinstance(self, Tensor2D)
         try:
-            indices = index_tensor.content.astype(int)
+            indices = self.content.astype(int)
         except:
             raise ValueError('index_tensor cannot be converted to int')
-        
-        scale_factor = self.square_size / index_tensor.square_size
+
+        scale_factor = value_tensor.square_size / self.square_size
 
         to_animations = []
         from_animations = []
-        for i in range(0, index_tensor.N):
-            for j in range(0, index_tensor.M):
-                original_position = index_tensor[i, j]['square'].get_center()
+        for i in range(0, self.N):
+            for j in range(0, self.M):
+                original_position = self[i, j]['square'].get_center()
 
                 # move to animation
                 index = indices[i, j]
-                target = self.squares.flatten()[index]
+                target = value_tensor.squares.flatten()[index]
                 dest = target.get_center()
                 path = Line(original_position, dest)
-                anim = MoveAlongPath(index_tensor[i, j]['square'], path)
+                anim = MoveAlongPath(self[i, j]['square'], path)
                 # anim = index_tensor[i, j]['square'].animate.move_to(dest).scale(scale_factor)
                 to_animations.append(anim)
 
                 # indices become values animation
-                current_content = index_tensor[i, j]['content']
-                target_content: MathTex = self.squares.flatten()[index]['content'].copy()
+                current_content = self[i, j]['content']
+                target_content: MathTex = value_tensor.squares.flatten()[index]['content'].copy()
                 target_content.set_style(**current_content.get_style())
                 anim = Transform(
                     current_content,
@@ -158,7 +158,7 @@ class Tensor2D(VGroup):
                 # move back (from) animations
                 path = Line(dest, original_position)
                 # anim = index_tensor[i, j].animate.move_to(original_position)#.scale(1/scale_factor)
-                anim = MoveAlongPath(index_tensor[i, j], path)
+                anim = MoveAlongPath(self[i, j], path)
                 from_animations.append(anim)
 
         animations = Succession(
@@ -172,7 +172,7 @@ class Tensor2D(VGroup):
         )
 
         return [animations]
-    
+
     # def stash_squares(self):
         # self._style_copy = deepcopy(self)
 

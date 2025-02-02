@@ -1,7 +1,6 @@
 from manim import *
 import numpy as np
 from copy import deepcopy
-from helpers import *
 
 from custom_animations import *
 

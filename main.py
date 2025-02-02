@@ -1,6 +1,5 @@
 from manim import *
 import numpy as np
-from helpers import *
 from custom_slide import CustomSlide
 from custom_animations import TransformMatchingTexInOrder
 from copy import deepcopy

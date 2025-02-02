@@ -680,31 +680,6 @@ class GridOfSquares(CustomSlide):
 
         self.next_slide()
 
-    # def test_gather_slide(self):
-    #     value_tensor = Tensor2D(1, 1, 1, np.array([[7]]))
-    #     index_tensor = Tensor2D(1, 1, 1, np.array([[0]]))
-    #     index_tensor.next_to(value_tensor, LEFT)
-
-    #     index_tensor.highlight(GREEN)
-
-    #     self.play(FadeIn(value_tensor, index_tensor))
-
-    #     self.next_slide()
-
-    #     # index_tensor.gather_from(value_tensor)
-    #     # self.play(Wait())
-    #     self.play(index_tensor.animate.gather_from(value_tensor))
-
-    #     self.next_slide()
-
-    #     # self.play(FadeOut(value_tensor))
-
-    #     # self.next_slide()
-
-    #     # breakpoint()
-    #     index_tensor.set_content_at(0, 0, 'A')
-    #     self.next_slide()
-
     def construct(self):
         # slide number
         self.counter = 0

@@ -5,10 +5,6 @@ from helpers import *
 
 from custom_animations import *
 
-# tex_template = TexTemplate(
-#     preamble=TexTemplateLibrary.default.preamble+'\n\\usepackage{emoji}', 
-#     tex_compiler='lualatex')
-
 class Tensor2D(VGroup):
     def __init__(self, N, M, square_size, content=None, **kwargs):
         self.squares = np.array([[]])
@@ -36,26 +32,6 @@ class Tensor2D(VGroup):
         self.move_to((0, 0, 0))
         self.saved_states = []
 
-    # @property
-    # def submobjects(self):
-    #     return list(self.squares.flatten())
-
-    # @submobjects.setter
-    # def submobjects(self, value):
-    #     pass
-
-    # def save_state(self):
-    #     # if hasattr(self, 'saved_state'):
-    #     #     self.saved_states.append(self.saved_state)
-    #     #     del self.saved_state
-    #     return super().save_state()
-
-    # def restore(self):
-    #     ret = super().restore()
-    #     # if len(self.saved_states) > 0:
-    #     #     self.saved_state = self.saved_states.pop()
-    #     return ret
-
     def highlight(self, color=YELLOW):
         self.set_color(color)
         self.set_fill(color, opacity=0.25)
@@ -68,7 +44,6 @@ class Tensor2D(VGroup):
             sq['content'].set_fill(WHITE, opacity=1.)
 
     def __getitem__(self, slices):
-        # result = self.squares[*slices]
         result = self.squares[slices]
         if isinstance(result, np.ndarray):
             slice = Tensor2D(result.shape[0], result.shape[1], self.square_size)
@@ -115,10 +90,7 @@ class Tensor2D(VGroup):
             self.content[i, j] = content[0] if len(content) == 1 else content
         except:
             breakpoint()
-        # try:
         tex = MathTex(*list(str(c) for c in content))
-        # except:
-            # breakpoint()
         square = self.squares[i, j]['square']
         if tex.height > tex.width:
             tex.scale_to_fit_height(square.width*0.7)
@@ -189,7 +161,6 @@ class Tensor2D(VGroup):
         except:
             raise ValueError('index_tensor cannot be converted to int')
 
-        # self.stash_squares()
         self.save_state()
 
         index_tensor.set_z_index(self.z_index+1)
@@ -224,7 +195,6 @@ class Tensor2D(VGroup):
                     ),
                     AnimationGroup(
                         *[
-                            # sq.animate.fade(0) for sq in new_chunk_squares
                             IndicationTransform(sq, deepcopy(sq).fade(0), run_time=run_time) for sq in new_chunk_squares
                         ],
                         lag_ratio=fade_in_lag_ratio
@@ -291,9 +261,6 @@ class Tensor2D(VGroup):
             function = lambda idx, content: [str((idx // self.M, idx % self.M))]
         elif function == 'stride_indexing':
             itemsize = self.squares.itemsize
-            # def pos(i):
-            #     return ''
-            #     # return f'\\iffalse {i} \\fi'
             def function(idx, content):
                 i = idx // self.M
                 j = idx % self.M
@@ -302,15 +269,6 @@ class Tensor2D(VGroup):
                     offset = (self.squares.__array_interface__['data'][0] - self.squares.base.__array_interface__['data'][0]) // self.squares.itemsize
                 else:
                     offset = 0
-                # return [
-                #     str(i) + pos(0),
-                #     r'\cdot',
-                #     str(i_stride//itemsize) + pos(1),
-                #     '+',
-                #     str(j) + pos(2),
-                #     r'\cdot',
-                #     str(j_stride//itemsize) + pos(3),
-                # ]
                 output = [
                     str(i),
                     r'\cdot',
@@ -324,7 +282,6 @@ class Tensor2D(VGroup):
                     output.append('+')
                     output.append(str(offset))
                 return output
-                # return f'{i}\\cdot {i_stride//itemsize} + {j}\\cdot {j_stride//itemsize}'
         for idx in range(0, len(self.content.flatten())):
             new_text = MathTex(*function(idx, self.content.flatten()))
             new_text.move_to(text)
@@ -332,7 +289,6 @@ class Tensor2D(VGroup):
             new_text.align_to(text, UP)
             yield AnimationGroup(
                 Indicate(self.squares.flatten()[idx]),
-                # ReplacementTransform(text, new_text, run_time=0.5)
                 TransformMatchingTexInOrder(
                     text,
                     new_text,
@@ -353,43 +309,16 @@ class Tensor2D(VGroup):
         )
         vd['text'] = original_text
 
-    # def expanded(self, axis, new_size):
-    #     assert self.squares.shape[axis] == 1
-    #     expanded = deepcopy(self)
-    #     repeats = [1, 1]
-    #     repeats[axis] = new_size
-    #     squares = expanded.squares.squeeze()
-    #     #TODO also deepcopy content?
-    #     previous = self.get_left()
-    #     new_squares = []
-    #     for _ in range(0, new_size):
-    #         new_array = deepcopy(squares)
-    #         new_group = VGroup(*new_array)
-    #         # new_group.move_to(previous, RIGHT)
-    #         new_group.shift(DOWN)
-    #         new_squares.append(new_array)
-    #         previous = new_group
-    #     expanded.squares = np.array(new_squares)
-    #     if axis == 0:
-    #         expanded.N = new_size
-    #     elif axis == 1:
-    #         expanded.M = new_size
-    #         expanded.squares = expanded.squares.T
-    #     return expanded
-
     def expand(self, axis, new_size, recenter=True):
         assert self.squares.shape[axis] == 1, breakpoint()
         squares = self.squares.flatten()
         original_position = self.get_center()
-        # exp = deepcopy(self)
         new_shape = (new_size, self.M) if axis == 0 else (self.N, new_size)
-        # exp = Tensor2D(new_shape[0], new_shape[1], self.square_size)
         self.N = new_shape[0]
         self.M = new_shape[1]
         self.content = np.broadcast_to(self.content, new_shape)
         self.content = self.content.copy().reshape(self.content.shape)
         self.submobjects = []
-        # TODO include exp.content in expansion
         self.squares = np.array([squares] + [
             deepcopy(squares) for _ in range(1, new_size)
         ])
@@ -397,7 +326,6 @@ class Tensor2D(VGroup):
         for i, vector in enumerate(self.squares):
             for sq in vector:
                 self.add(sq)
-                # sq['content'] = Tex(str(i)).move_to(sq['square']) # debug
                 for _ in range(0, i):
                     sq.shift(shift_vector)
         if axis == 1:
@@ -428,25 +356,6 @@ class Tensor2D(VGroup):
                 other_tex_string = other.squares[i, j]['content'].tex_string
                 self.set_content_at(i, j, self_tex_string, op_string, other_tex_string)
 
-    # @override_animate(elementwise_op)
-    # def elementwise_op_animate(self, other, op_string='+', op_func=lambda x, y: x+y, anim_args=None):
-    #     target = deepcopy(self)
-    #     target.elementwise_op(other, op_string, op_func)
-    #     animations = []
-    #     for i in range(0, self.N):
-    #         for j in range(0, self.M):
-    #             self_tex = self.squares[i, j]['content']
-    #             other_tex = other.squares[i, j]['content']
-    #             other_sq = other.squares[i, j]['square']
-    #             target_tex = target.squares[i, j]['content']
-    #             animations.append(AnimationGroup(
-    #                 ReplacementTransform(self_tex, target_tex[0]),
-    #                 ReplacementTransform(other_tex, target_tex[2]),
-    #                 FadeIn(target_tex[1]),
-    #                 FadeOut(other_sq)
-    #             ))
-    #     return AnimationGroup(*animations)
-
     @override_animate(elementwise_op)
     def elementwise_op_animate(self, other, op_string='+', anim_args=None):
         if hasattr(self, 'saved_state'):
@@ -469,16 +378,9 @@ class Tensor2D(VGroup):
 
                 source_sq = source.squares[i, j]['square']
                 other_sq = other.squares[i, j]['square']
-                # target_sq = self.squares[i, j]['square']
                 source_sq.fade(1) # no need for the duplicate square, nothing is changing for it
 
-                animations.append(AnimationGroup(
-                    # ReplacementTransform(source_tex, target_tex[0]),
-                    # ReplacementTransform(other_tex, target_tex[2]),
-                    # ReplacementTransform(source_sq, target_sq),
-                    # FadeIn(target_tex[1]),
-                    FadeOut(other_sq),
-                ))
+                animations.append(FadeOut(other_sq))
         animations.append(Restore(self))
         return AnimationGroup(*animations)
 

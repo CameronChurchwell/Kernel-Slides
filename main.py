@@ -1,14 +1,14 @@
 from manim import *
 import numpy as np
-from custom_slide import CustomSlide
-from custom_animations import TransformMatchingTexInOrder
+from manimutils import CustomSlide
+from manimutils.animations import TransformMatchingTexInOrder, ReplacementTransformSubmobjects
 from copy import deepcopy
 
-from tensors import Tensor2D
+from manimutils import Tensor2D
 
 np.random.seed(8888)
 
-class GridOfSquares(CustomSlide):
+class KernelSlides(CustomSlide):
 
     def indexing_slide(self):
         # flat indexing
@@ -115,17 +115,11 @@ class GridOfSquares(CustomSlide):
         self.play(AnimationGroup(
             a.animate.expand(0, 2),
             b.animate.expand(1, 3, recenter=False),
-            TransformMatchingTexInOrder(a_shape, a_expanded_shape),
-            TransformMatchingTexInOrder(b_broadcast_shape, b_expanded_shape),
+            ReplacementTransformSubmobjects(a_shape, a_expanded_shape),
+            ReplacementTransformSubmobjects(b_broadcast_shape, b_expanded_shape),
         ))
         self.next_slide()
 
-        # self.play(a.elementwise_op(b))
-        # self.play(a.animate.elementwise_op(b))
-        # # self.wait(1)
-        # self.next_slide()
-        # self.play(a.animate.highlight(YELLOW))
-        # self.next_slide()
         self.play(AnimationGroup(
             a.animate.__iadd__(b),
             FadeOut(plus),
